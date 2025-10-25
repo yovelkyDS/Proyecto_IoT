@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Monitoreo Ambiental TEC San Carlos</title>
+<link rel="stylesheet" href="CSS/style.css">
+</head>
+<body>
+    <!-- Encabezado fijo -->
+    <header class="site-header" role="banner">
+        <div class="header-inner">
+            <div class="brand">
+                <h1 class="brand__title" aria-label="Título del sitio">
+                    Monitoreo Ambiental TEC San Carlos
+                </h1>
+            </div>
+
+        <!-- Botón a otra pantalla: cambia el href a tu ruta real -->
+            <a class="cta" href="Home.html" aria-label="Ir a pantalla de inicio">
+                Home
+                <!-- ícono flecha minimalista -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M5 12h12M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenido de ejemplo -->
+    <main role="main" class="consulta-container">
+  <section class="filters card">
+    <h2>Consulta de Variables Ambientales</h2>
+
+  <div class="filter-grid">
+    <div>
+      <label for="fecha-inicio">Fecha inicio:</label>
+      <input type="date" id="fecha-inicio">
+    </div>
+    <div>
+      <label for="fecha-fin">Fecha fin:</label>
+      <input type="date" id="fecha-fin">
+    </div>
+    <div>
+      <label for="opcion">Opcion:</label>
+      <select id="opcion">
+        <option value="una">Una variable</option>
+        <option value="dos">Dos variables</option>
+        <option value="todas">Todas las variables</option>
+      </select>
+    </div>
+    <!--Selectores dinamicos-->
+    <div id="select-var1" class="var-select">
+        <label for="variable1">Variable 1:</label>
+        <select id="variable1">
+            <option value="temperatura">Temperatura (°C)</option>
+            <option value="humedad">Humedad (%)</option>
+            <option value="uv">Radiación UV</option>
+        </select>
+    </div>
+
+    <div id="select-var2" class="var-select" style="display: none;">
+        <label for="variable2">Variable 2:</label>
+        <select id="variable2">
+            <option value="temperatura">Temperatura (°C)</option>
+            <option value="humedad">Humedad (%)</option>
+            <option value="uv">Radiación UV</option>
+        </select>
+    </div>
+
+    <button id="btn-consultar" class="cta">Consultar</button>
+  </div>
+</section>
+
+<section class="results card">
+  <h2>Resultados de la consulta</h2>
+
+  <!-- Panel de estadísticas tipo tarjetas -->
+  <div id="stats-container" class="kpi-grid kpi-centered"></div>
+
+  <!-- Gráfico -->
+  <canvas id="graficoConsulta" height="120"></canvas>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="JS/consultas.js"></script>
+
+</body>
+</html>

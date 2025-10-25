@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Monitoreo Ambiental TEC San Carlos</title>
+    <link rel="stylesheet" href="CSS/style.css" />
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js";
+
+        // --- Configuración de Firebase ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9xUeHv-AsicZO2aJy5tGBv_i-rfrETeY",
+            authDomain: "project-iot-52910.firebaseapp.com",
+            databaseURL: "https://project-iot-52910-default-rtdb.firebaseio.com",
+            projectId: "project-iot-52910",
+            storageBucket: "project-iot-52910.firebasestorage.app",
+            messagingSenderId: "852594242943",
+            appId: "1:852594242943:web:a2d02b012632baf8c1564a",
+            measurementId: "G-H4F0VVLG2R"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // === Función para actualizar la UI con los datos actuales ===
+        function updateCurrentData(lastData) {
+            // Variables principales
+            const temp = lastData.temperatura ?? 0;
+            const hum = lastData.humedad ?? 0;
+            const uv = lastData.uv ?? 0;
+            const estado = lastData.estado_actual ?? "—";
+
+            document.getElementById("temp-readout").textContent = `${temp.toFixed(1)}°C`;
+            document.getElementById("hum-readout").textContent = `${hum}%`;
+            document.getElementById("uv-value").textContent = uv.toFixed(1);
+
+            // Actualiza visuales
+            if (window.updateTemperature) window.updateTemperature(temp, estado);
+            if (window.updateHumidity) window.updateHumidity(hum);
+            if (window.updateUV) window.updateUV(uv);
+        }
+
+        // === Función para actualizar el pronóstico semanal ===
+        function updateWeeklyForecast(pronostico) {
+            if (!pronostico || !window.setWeekData) return;
+
+            const weekArray = Object.values(pronostico).map(p => ({
+                date: p.fecha,
+                state: p.descripcion,
+                tmax: p.temp_max,
+                tmin: p.temp_min,
+                hum: p.humedad ,
+                uv: p.uv 
+            }));
+
+            window.setWeekData(weekArray, { containerId: "week-grid" });
+            console.log("Pronóstico semanal actualizado:", weekArray);
+        }
+
+        // === Lectura en tiempo real ===
+        function listenToData() {
+            const climaRef = ref(db, "monitoreo_clima");
+
+            onValue(climaRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                // Último nodo
+                const lastKey = Object.keys(data).pop();
+                const lastData = data[lastKey];
+
+                // === Actualiza los valores principales ===
+                updateCurrentData(lastData);
+
+                // === Pronóstico semanal (último nodo) ===
+                if (lastData.pronostico) {
+                    updateWeeklyForecast(lastData.pronostico);
+                }
+                // === Pronóstico mensual (resto de nodos) ===
+                updateMonthFromFirebase(data);
+            });
+        }
+
+        function updateMonthFromFirebase(data) {
+            if (!data || !window.setMonthData) return;
+
+            const keys = Object.keys(data);
+            if (keys.length < 2) return; // debe haber al menos 2 registros
+
+            // Excluir el último (dato actual)
+            const prevKeys = keys.slice(0, -1);
+
+            // Convertir cada nodo a formato para el calendario
+            const monthArray = prevKeys.map(k => {
+                const entry = data[k];
+                // Extrae fecha (solo día) del campo fecha_hora
+                const fechaISO = entry.fecha_hora
+                    ? entry.fecha_hora.split(" ")[0]
+                    : new Date().toISOString().slice(0, 10);
+
+                return {
+                    date: fechaISO,
+                    t: entry.temperatura ?? null,
+                    state: entry.estado_actual ?? "Sin datos"
+                };
+            });
+
+            // Pasar los datos al calendario del mes
+            window.setMonthData(monthArray);
+            console.log("Pronóstico mensual actualizado:", monthArray);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            listenToData();
+        });
+    </script>
+</head>
+
+<body>
+    <!-- Encabezado fijo -->
+    <header class="site-header" role="banner">
+        <div class="header-inner">
+            <div class="brand">
+                <h1 class="brand__title" aria-label="Título del sitio">
+                    Monitoreo Ambiental TEC San Carlos
+                </h1>
+            </div>
+
+            <!-- Botón a otra pantalla: cambia el href a tu ruta real -->
+            <a class="cta" href="Consultar.html" aria-label="Ir a pantalla de consulta del clima">
+                Consultar clima
+                <!-- ícono flecha minimalista -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true">
+                    <path d="M5 12h12M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </a>
+        </div>
+    </header>
+    <!-- Contenido de ejemplo -->
+    <main role="main">
+        <!-- ====== Pronóstico del día ====== -->
+        <section class="daily card" id="daily">
+            <h2 class="mt-0">Pronóstico del día</h2>
+
+            <div class="kpi-grid kpi-centered">
+                <!-- TARJETA: TEMPERATURA -->
+                <div class="card card--kpi kpi-temp" id="card-temp">
+                    <h2 class="mt-0">🌡️ Temperatura</h2>
+                    <div class="temp-content">
+                        <!-- Termómetro -->
+                        <div class="thermo" aria-label="Termómetro">
+                            <svg viewBox="0 0 80 220" class="thermo-svg" role="img" aria-hidden="true">
+                                <!-- Tubo -->
+                                <rect x="34" y="20" width="12" height="160" rx="6" fill="rgba(255,255,255,0.12)" />
+                                <rect x="36" y="22" width="8" height="156" rx="4" fill="rgba(255,255,255,0.18)" />
+                                <!-- Bulbo -->
+                                <circle cx="40" cy="200" r="20" fill="rgba(255,255,255,0.12)" />
+                                <circle cx="40" cy="200" r="16" fill="rgba(255,255,255,0.18)" />
+                                <!-- MERCURIO (se ajusta con JS) -->
+                                <defs>
+                                    <clipPath id="tube-clip">
+                                        <rect x="36" y="22" width="8" height="156" rx="4" />
+                                    </clipPath>
+                                </defs>
+                                <g clip-path="url(#tube-clip)">
+                                    <rect id="thermo-fill" x="36" y="178" width="8" height="0"
+                                        fill="var(--thermo-color)" />
+                                </g>
+                                <circle id="thermo-bulb" cx="40" cy="200" r="14" fill="var(--thermo-color)" />
+                            </svg>
+                        </div>
+                        <!-- Visual del clima + lectura -->
+                        <div class="weather-visual">
+                            <div id="weather-icon" class="weather-icon" aria-hidden="true"></div>
+                            <div id="temp-readout" class="temp-readout" aria-live="polite">— °C</div>
+                            <div id="condition-label" class="condition-label">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARJETA: HUMEDAD -->
+                <div class="card card--kpi kpi-hum" id="card-hum">
+                    <h2 class="mt-0">💧 Humedad</h2>
+                    <div class="hum-content">
+                        <!-- Gota -->
+                        <div class="drop" aria-label="Gota de humedad">
+                            <svg viewBox="0 0 130 190" class="drop-svg" role="img" aria-hidden="true">
+                                <defs>
+                                    <clipPath id="drop-shape">
+                                        <path
+                                            d="M65 8 C53 32, 33 82, 30 90 A40 40 0 1 0 100 90 C97 82, 77 32, 65 8 Z" />
+                                    </clipPath>
+                                    <linearGradient id="hum-gradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#90CAF9" />
+                                        <stop offset="100%" stop-color="#42A5F5" />
+                                    </linearGradient>
+                                </defs>
+                                <g clip-path="url(#drop-shape)" clipPathUnits="userSpaceOnUse">
+                                    <rect id="hum-fill" x="-20" y="190" width="170" height="0"
+                                        fill="url(#hum-gradient)" />
+                                    <path id="hum-wave" d="M-20 140 C20 132, 110 148, 150 140 V190 H-20 Z"
+                                        fill="rgba(255,255,255,0.12)" />
+                                </g>
+                                <path d="M65 8 C53 32, 33 82, 30 90 A40 40 0 1 0 100 90 C97 82, 77 32, 65 8 Z"
+                                    fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.20)" stroke-width="2.2"
+                                    stroke-linejoin="round" stroke-linecap="round" />
+                            </svg>
+                            <div class="hum-scale" aria-hidden="true">
+                                <span>100%</span><span>50%</span><span>0%</span>
+                            </div>
+                        </div>
+                        <!-- Lecturas -->
+                        <div class="hum-visual">
+                            <div id="hum-readout" class="hum-readout" aria-live="polite">—%</div>
+                            <div id="hum-status" class="hum-status">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARJETA: RADIACIÓN UV -->
+                <div class="card card--kpi kpi-uv" id="card-uv">
+                    <h2 class="mt-0">🌞 Radiación UV</h2>
+                    <div class="uv-content">
+                        <!-- Sol -->
+                        <div class="uv-sun" aria-label="Indicador de radiación UV">
+                            <div class="uv-core">
+                                <span id="uv-value" class="uv-value" aria-live="polite">—</span>
+                            </div>
+                            <div class="uv-rays" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <!-- Texto/consejos -->
+                        <div class="uv-info">
+                            <div id="uv-level" class="uv-level">—</div>
+                            <div id="uv-advice" class="uv-advice">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== Calendario semanal ====== -->
+        <section class="week card" id="week">
+            <h2 class="mt-0">Pronóstico de la semana</h2>
+            <div class="week-grid" id="week-grid"><!-- se rellena por JS --></div>
+        </section>
+    </main>
+
+    <!-- ====== Pronóstico del mes ====== -->
+    <section class="month card" id="month" class="calendar-wrap" style="max-width: 1600px;">
+        <div class="month-bar">
+            <button class="month-nav" id="btn-prev" aria-label="Mes anterior">‹</button>
+            <h2 class="mt-0" id="month-title">Pronóstico del mes</h2>
+            <button class="month-nav" id="btn-next" aria-label="Mes siguiente">›</button>
+        </div>
+
+        <!-- Nombres de días -->
+        <div class="month-weekdays" aria-hidden="true">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+
+        <!-- Grilla mensual -->
+        <div class="month-grid" id="month-grid">
+            <!-- Se rellena por JS -->
+        </div>
+    </section>
+
+    <br>
+    <script src="JS/Main.js" defer></script>
+</body>
+
+</html>

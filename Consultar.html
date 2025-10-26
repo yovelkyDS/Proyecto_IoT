@@ -28,7 +28,7 @@
     </header>
 
     <!-- Contenido de ejemplo -->
-    <main role="main" class="consulta-container">
+  <main role="main" class="consulta-container">
   <section class="filters card">
     <h2>Consulta de Variables Ambientales</h2>
 
@@ -80,11 +80,18 @@
 
   <!-- Gráfico -->
   <canvas id="graficoConsulta" height="120"></canvas>
+  <!-- Botones de exportación -->
+  <div class="export-buttons">
+    <button id="btn-export-pdf" class="export-btn">🧾 Exportar PDF</button>
+  </div>
+
 </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script type="module" src="consultas.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
 
 </body>
 </html>

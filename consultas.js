@@ -92,6 +92,80 @@ btnConsultar.addEventListener("click", async () => {
   graficar(fechas, datasets);
 });
 
+// === Exportar a PDF (versión local estable con acentos básicos) ===
+document.getElementById("btn-export-pdf").addEventListener("click", () => {
+  if (!grafico) {
+    alert("Realice una consulta antes de exportar.");
+    return;
+  }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("l", "pt", "a4");
+
+    // --- Encabezado ---
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("Reporte de Variables Ambientales", 40, 40);
+
+    pdf.setFontSize(12);
+    const fechaInicio = document.getElementById("fecha-inicio").value || "—";
+    const fechaFin = document.getElementById("fecha-fin").value || "—";
+    pdf.text(`Periodo: ${fechaInicio} a ${fechaFin}`, 40, 65);
+
+    let y = 90;
+
+    // --- Gráfica ---
+    const canvas = document.getElementById("graficoConsulta");
+    const imgData = canvas.toDataURL("image/png", 1.0);
+    pdf.addImage(imgData, "PNG", 40, y, 720, 300);
+    y += 340;
+
+    // --- Estadísticas ---
+    const stats = document.querySelectorAll("#stats-container .card--kpi");
+    if (stats.length > 0) {
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Resumen de estadisticas:", 40, y);
+      y += 20;
+
+      pdf.setFont("helvetica", "normal");
+      stats.forEach((card) => {
+        let title = card.querySelector("h2").textContent
+          .replace(/[^\x00-\x7F]/g, "") // elimina caracteres no ASCII
+          .trim();
+        let values = [...card.querySelectorAll("p")]
+          .map((p) =>
+            p.textContent
+              .replace(/[^\x00-\x7F]/g, "") // limpia acentos/emojis
+              .trim()
+          )
+          .join(" | ");
+
+        const line = `${title}: ${values}`;
+        const lines = pdf.splitTextToSize(line, 720);
+        pdf.text(lines, 60, y);
+        y += lines.length * 14;
+      });
+    }
+
+    // --- Pie de página ---
+    y += 40;
+    pdf.setFontSize(10);
+    pdf.text(
+      "Generado automaticamente por el Sistema IoT - Monitoreo Ambiental TEC San Carlos",
+      40,
+      y
+    );
+
+    pdf.save("reporte_variables.pdf");
+  } catch (err) {
+    console.error("Error al generar PDF:", err);
+    alert("Ocurrió un error al generar el PDF. Revisa la consola para más detalles.");
+  }
+});
+
+
+
 // === Funciones auxiliares ===
 async function obtenerDatosFirebase() {
   const dbRef = ref(db);

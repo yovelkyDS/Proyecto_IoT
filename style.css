@@ -1324,3 +1324,30 @@ button.cta:hover {
   box-shadow: 0 0 6px rgba(94, 184, 255, 0.4);
 }
 
+/* === Botones de exportación === */
+.export-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 1.2rem;
+}
+
+.export-btn {
+  background: linear-gradient(90deg, #125385, #3e99ff);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s ease-in-out;
+}
+
+.export-btn:hover {
+  background: linear-gradient(90deg, #0c3b70, #1c80ff);
+  transform: translateY(-2px);
+}
+
+.export-btn:active {
+  transform: translateY(0);
+}

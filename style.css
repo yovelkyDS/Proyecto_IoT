@@ -157,7 +157,7 @@ main {
 }
 
 .daily>h2 {
-  font-size: clamp(1.1rem, 1rem + 1vw, 1.4rem);
+  font-size: clamp(1.2rem, 1rem + 1vw, 1.6rem);
   margin-bottom: 16px;
 }
 
@@ -357,7 +357,7 @@ main {
 }
 
 .temp-readout {
-  font-size: clamp(1.8rem, 1.8rem + 2vw, 2.6rem);
+  font-size: clamp(1.7rem, 1.7rem + 2vw, 2.5rem);
   font-weight: 900;
   line-height: 1.1;
   margin-top: 6px;
